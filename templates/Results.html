@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+        <style type="text/css">
+        html,body{
+        overflow-y:hidden;
+        overflow-x:hidden;
+        }
+        select {
+          width: 100%;
+          padding: 16px 20px;
+          border: none;
+          border-radius: 4px;
+          background-color: white;
+            -webkit-text-fill-color: #1B1B1B
+        }
+    </style>
+    <meta charset="UTF-8">
+    <title>divyadrishti</title>
+</head>
+<body>
+
+
+
+
+<body style="background-color: #1B1B1B ; -webkit-text-fill-color:white" >
+    <div id="particles-js">
+
+        <!---from here form start ---->
+            <div class="container" style="position: absolute; margin-left: 400px;margin-top: 100px" >
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6" style="font-size: xx-large">
+                            Patient Name :{{ name }}<br>
+                            Selected Symptom 1 : {{ symptom1 }}<br>
+                            Selected Symptom 2 : {{ symptom2 }}<br>
+                            Selected Symptom 3 : {{ symptom3 }}<br>
+                            Selected Symptom 4 : {{ symptom4 }}<br>
+                            Selected Symptom 5 : {{ symptom5 }}<br>
+                            Your Probable Disease Is: {{ disease }}
+                            <a  style="display: block; font-size: large ;width: 155px;height: 45px;background: white;padding: 30px;text-align: center;border-radius: 15px;color:#1B1B1B;font-weight: bold;margin-top: 15px;" href="">Idenitfy Another Disease </a>
+                            <a  style="display: block; font-size: large ;width: 155px;height: 45px;background: white;padding: 30px;text-align: center;border-radius: 15px;color:#1B1B1B;font-weight: bold;margin-left: 250px;margin-top: 0px;" href="table">Check out Nearby Medical Facilites </a>
+                        </form>
+                    </div>
+                </div>
+          </div>
+        <!---from here form ends ---->
+
+    </div>
+    <!---scripts here for particle js  ---->
+
+    <script src="{% static 'particles.js' %}"></script>
+    <script src="{% static 'app.js' %}"></script>
+
+
+</body>
+</html>
