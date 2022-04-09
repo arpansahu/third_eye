@@ -60,10 +60,10 @@
                                             <tbody>
                                             {% for i in hospitalList %}
                                                     <tr>
-                                                        <td class="column1">{{ i.1 }}</td>
-                                                        <td class="column1" style="width: 800px">{{ i.2 }} {{ i.3 }} {{ i.4 }} {{ i.5 }} {{ i.12 }} {{ i.13 }} {{  i.6 }}</td>
-                                                        <td class="column6">{{ i.7 }}</td>
-                                                        <td class="column6">{{ i.11 }}</td>
+                                                        <td class="column1">{{ i.name }}</td>
+                                                        <td class="column1" style="width: 800px">{{ i.address }} {{ i.street }} {{ i.landmark }} {{ i.locality }} {{ i.pincode }}</td>
+                                                        <td class="column6">{{ i.landline_no }}</td>
+                                                        <td class="column6">{{ i.type }}</td>
 
                                                     </tr>
                                             {% endfor %}<br>
