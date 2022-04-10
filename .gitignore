@@ -56,5 +56,5 @@ tmtagsHistory
 /.vscode/settings.json
 .env
 socialauth
-
+.idea
 **/migrations/**
