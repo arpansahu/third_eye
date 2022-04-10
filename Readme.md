@@ -38,7 +38,7 @@ Indian Medical Facilities in my database. Although you can add your area hospita
 
 ## Demo
 
-Available at: https://django-project-api-crud-graphq.herokuapp.com/
+Available at: https://third-eye-divya-drishti.herokuapp.com/
 
 admin login details:--
 username: arpansahu
