@@ -1,3 +1,7 @@
 from django.contrib import admin
+from divyadrishti.models import Symptoms, SymptomsAndPatientName, Hospitals
 
-# Register your models here.
+
+admin.site.register(Symptoms)
+admin.site.register(SymptomsAndPatientName)
+admin.site.register(Hospitals)
