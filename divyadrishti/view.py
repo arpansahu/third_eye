@@ -100,6 +100,7 @@ def table(request):
                 client_ip = socket.gethostbyname(hostname)
                 print("Your Computer Name is:" + hostname)
                 print("Your Computer IP Address is:" + client_ip)
+                client_ip = '59.92.10.179'
 
     import geoip2.database
     reader = geoip2.database.Reader(settings.BASE_DIR + '/divyadrishti/GeoLite2-City.mmdb')
