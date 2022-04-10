@@ -103,7 +103,7 @@ def table(request):
 
     import geoip2.database
     reader = geoip2.database.Reader(settings.BASE_DIR + '/divyadrishti/GeoLite2-City.mmdb')
-    response = reader.city('122.168.45.195')
+    response = reader.city(client_ip)
     city = response.city.name
     country = response.country.name
     state = response.subdivisions.most_specific.name
