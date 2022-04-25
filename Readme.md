@@ -23,8 +23,11 @@ Indian Medical Facilities in my database. Although you can add your area hospita
 
 -Deployed on Heroku
 
-~~1. Used Heroku Postgres 
-2. Used AWS S3 Bucket for static and media files~~
+1. Used Heroku Postgres
+
+Note: Since Heroku Postgres Free ver only allows 10,000 max rows, I have switched to SQlite DB due to 200, 000+ medical
+facility entries in database.
+
 ## Tech Stack
 
 [![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
