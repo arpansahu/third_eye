@@ -115,7 +115,7 @@ def table(request):
     print("client ip is :", client_ip)
 
     hospitals = Hospitals.objects.filter(state=state)
-
+    print("hospitals check")
     # Python 3 program to calculate Distance Between Two Points on Earth
     from math import radians, cos, sin, asin, sqrt
 
@@ -141,10 +141,10 @@ def table(request):
         return (c * r)
 
     finallist = []
-
+    print("finallist check")
     for i in hospitals:
         dis = distance(float(lat), float(i.latitude), float(lon), float(i.longitude))
         if dis < 25:
             finallist.append(i)
-
+    print("for loop check")
     return render(request, 'table.html', {"hospitalList": finallist})
