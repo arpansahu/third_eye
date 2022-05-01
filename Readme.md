@@ -1,13 +1,7 @@
 
 # Third Eye Project
 
-This project is with Django. The purpose of building this project is, a large population hesitate to visit doctors at first.
-So they try some home remedies first and then when they give up in home remedies, and they are still suffering from the same disease
-they visit doctors. This project is build to help them determine which is the most probable disease they would be suffering from.
-This is not recommended since Machine LEarning model is training on limited data collected by MIT. Only 53 symptoms are accounted in
-data. Moreover, Model is trained with 97.0 accuracy. But in Filed of Medical ever 0.1 accuracy is important. It can be improved with other
-Machine LEarning Models. After getting the prediction users can also locate nearby medical facilities for India. Since I have saved only 
-Indian Medical Facilities in my database. Although you can add your area hospitals too.
+The purpose of building this project is, for a large population to hesitate to visit doctors at first. So they try some home remedies first and then when they give up on home remedies, and they are still suffering from the same disease they visit doctors. This project is built to help them determine which is the most probable disease they would be suffering from. This is not recommended since the Machine Learning model is training on limited data collected by MIT. Only 53 symptoms are accounted for in the data. Moreover, the Model is trained with 97.0 accuracies. But in Filed of Medical ever 0.1 accuracy is important. It can be improved with other Machine Learning Models. After getting the prediction users can also locate nearby medical facilities in India. Since I have saved only Indian Medical Facilities in my database. Although you can add your area hospitals too.
 
 
 -Implemented A simple Web App using Naive Bayes Machine Learning algorithm.
