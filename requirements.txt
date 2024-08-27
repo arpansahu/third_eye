@@ -18,7 +18,7 @@ gunicorn==20.1.0
 idna==3.3
 jmespath==1.0.1
 joblib==1.1.0
-maxminddb==2.2.0
+maxminddb==2.6.2
 multidict==6.0.2
 numpy==1.22.3
 pandas==1.4.2
