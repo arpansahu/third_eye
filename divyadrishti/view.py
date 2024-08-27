@@ -6,7 +6,7 @@ from django.conf import settings
 # importing pickle to predict with the help of pickled model in naivebayesbernouli.pkl
 import pickle
 # list of symptoms and list of diseases
-
+import geoip2.database
 from .machine_learning.machinlearning import disease, listofsymptoms
 
 # our main function for divyadrishti app
@@ -102,7 +102,7 @@ def table(request):
                 print("Your Computer IP Address is:" + client_ip)
                 client_ip = '59.92.10.179'
 
-    import geoip2.database
+
     reader = geoip2.database.Reader(settings.BASE_DIR + '/divyadrishti/GeoLite2-City.mmdb')
     response = reader.city(client_ip)
     city = response.city.name
