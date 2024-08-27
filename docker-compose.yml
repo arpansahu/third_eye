@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  web:
+    build:  # This section will be used when running locally
+      context: .
+      dockerfile: Dockerfile
+    image: harbor.arpansahu.me/library/third_eye:latest
+    env_file: ./.env
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8000 third_eye.wsgi"
+    container_name: third_eye
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    restart: unless-stopped

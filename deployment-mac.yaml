@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: third-eye-mac-app
+  labels:
+    app: third-eye-mac
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: third-eye-mac
+  template:
+    metadata:
+      labels:
+        app: third-eye-mac
+    spec:
+      imagePullSecrets:
+        - name: harbor-registry-secret
+      containers:
+        - image: harbor.arpansahu.me/library/third_eye_mac:latest
+          name: third-eye-mac
+          envFrom:
+            - secretRef:
+                name: third-eye-secret
+          ports:
+            - containerPort: 8000
+              name: gunicorn
+  revisionHistoryLimit: 0
