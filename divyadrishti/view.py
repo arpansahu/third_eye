@@ -148,3 +148,44 @@ def table(request):
             finallist.append(i)
     print("for loop check")
     return render(request, 'table.html', {"hospitalList": finallist})
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+import requests
+
+import requests
+
+def get_location_by_ip(ip):
+    try:
+        response = requests.get(f'https://ipinfo.io/{ip}/json')
+        data = response.json()
+        if data.get('bogon'):
+            return {
+                'ip': ip,
+                'error': 'Bogon IP address, cannot determine location',
+                'message': 'This IP address is not routable on the public internet.'
+            }
+        return {
+            'ip': ip,
+            'city': data.get('city'),
+            'region': data.get('region'),
+            'country': data.get('country'),
+            'location': data.get('loc'),  # Latitude and Longitude
+            'organization': data.get('org'),
+            'postal': data.get('postal'),
+        }
+    except requests.RequestException:
+        return {'error': 'Unable to reach the geolocation service'}
+
+from django.http import JsonResponse
+
+def user_location_view(request):
+    ip = get_client_ip(request)
+    location = get_location_by_ip(ip)
+    return JsonResponse(location)
