@@ -13,7 +13,7 @@ pipeline {
         ENV_PROJECT_NAME = "third_eye"
         DOCKER_PORT = "8008"
         PROJECT_NAME_WITH_DASH = "third-eye"
-        SERVER_NAME= "arpansahu.me"
+        SERVER_NAME= "third-eye.arpansahu.me"
         BUILD_PROJECT_NAME = "third_eye_build"
         JENKINS_DOMAIN = "jenkins.arpansahu.me"
         SENTRY_ORG="arpansahu"
