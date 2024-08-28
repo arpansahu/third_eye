@@ -1,5 +1,5 @@
 # importing render from django - shortcuts
-
+import requests
 from django.shortcuts import render
 from .models import Symptoms, SymptomsAndPatientName, Hospitals
 from django.conf import settings
@@ -8,6 +8,7 @@ import pickle
 # list of symptoms and list of diseases
 import geoip2.database
 from .machine_learning.machinlearning import disease, listofsymptoms
+from django.http import JsonResponse
 
 # our main function for divyadrishti app
 def divya_drishti(request):
@@ -151,20 +152,24 @@ def table(request):
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
+    x_real_ip = request.META.get('HTTP_X_REAL_IP')
+    
+    # Use X-Real-IP if available, otherwise fall back to X-Forwarded-For
+    if x_real_ip:
+        ip = x_real_ip
+    elif x_forwarded_for:
         ip = x_forwarded_for.split(',')[0]
     else:
         ip = request.META.get('REMOTE_ADDR')
 
-    # Exclude internal IPs (common in Kubernetes networking)
+    # Optionally filter out internal IP ranges if needed
     if ip.startswith('10.') or ip.startswith('192.168') or ip.startswith('172.'):
-        return None  # Handle this as needed (e.g., logging, fallback, etc.)
+        return None  # Handle as needed
 
     return ip
 
-import requests
 
-import requests
+
 
 def get_location_by_ip(ip):
     try:
@@ -188,7 +193,7 @@ def get_location_by_ip(ip):
     except requests.RequestException:
         return {'error': 'Unable to reach the geolocation service'}
 
-from django.http import JsonResponse
+
 
 def user_location_view(request):
     ip = get_client_ip(request)
