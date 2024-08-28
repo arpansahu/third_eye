@@ -7,7 +7,7 @@ spec:
     app: third-eye
   ports:
     - protocol: TCP
-      port: 8000
-      targetPort: 8000
-      nodePort: 32000
+      port: 8008
+      targetPort: 8008
+      nodePort: 32008
   type: NodePort

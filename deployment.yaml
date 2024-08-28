@@ -23,6 +23,6 @@ spec:
             - secretRef:
                 name: third-eye-secret
           ports:
-            - containerPort: 8000
+            - containerPort: 8008
               name: gunicorn
   revisionHistoryLimit: 0

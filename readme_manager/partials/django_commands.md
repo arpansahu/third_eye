@@ -9,9 +9,3 @@ python manage.py test_db
 ```bash
 python manage.py test_cache
 ```
-
-3. Sync Media to S3
-  In case if you are using production database and debug mode is on. all the media send in the chats will be stored to local media folder which might not get synced to s3 bucket and when you run in production those media will be missing.
-```bash
-python manage.py sync_media_to_s3
-```

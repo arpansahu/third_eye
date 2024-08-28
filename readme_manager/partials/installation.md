@@ -15,7 +15,8 @@ Making Migrations and Migrating them.
 ```
 Run update_data Command
 ```
-  python manage.py update_data
+  python manage.py update_hospitals_data
+  python manage.py update_symptoms_data
 ```
 Creating Super User
 ```bash

@@ -6,6 +6,6 @@ COPY . .
 
 RUN pip3 install -r requirements.txt
 
-EXPOSE 8000
+EXPOSE 8008
 
-CMD bash -c "python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8000 third_eye.wsgi"
+CMD bash -c "python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8008 third_eye.wsgi"
