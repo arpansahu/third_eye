@@ -9,6 +9,9 @@ import pickle
 import geoip2.database
 from .machine_learning.machinlearning import disease, listofsymptoms
 from django.http import JsonResponse
+import json
+from math import radians, degrees, cos, sin, asin, sqrt
+from django.db.models import Q
 
 # our main function for divyadrishti app
 def divya_drishti(request):
@@ -81,73 +84,75 @@ def divya_drishti(request):
                        "symptom4": nameAndsymptomlistfromuse[4], "symptom5": nameAndsymptomlistfromuse[5],
                        "disease": final_disease})
 
+    print(symp_objs)
     return render(request, 'divyadrishti.html', {"Symptoms": symp_objs})
 
 
+
+def get_bounds(lat, lon, radius_km):
+    # Radius of Earth in km
+    R = 6371
+
+    # Convert latitude and longitude from degrees to radians
+    lat_rad = radians(lat)
+    lon_rad = radians(lon)
+
+    # Calculate the bounds
+    dlat = radius_km / R
+    dlon = radius_km / (R * cos(lat_rad))
+
+    min_lat = lat - (dlat * (180 / 3.14159))
+    max_lat = lat + (dlat * (180 / 3.14159))
+    min_lon = lon - (dlon * (180 / 3.14159))
+    max_lon = lon + (dlon * (180 / 3.14159))
+
+    return min_lat, max_lat, min_lon, max_lon
+
+def distance(lat1, lon1, lat2, lon2):
+    # Calculate the distance between two points on Earth
+    lon1 = radians(lon1)
+    lon2 = radians(lon2)
+    lat1 = radians(lat1)
+    lat2 = radians(lat2)
+
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+    c = 2 * asin(sqrt(a))
+    r = 6371  # Radius of Earth in km
+
+    return c * r
+
+def get_hospitals_within_radius(lat, lon, radius_km):
+    min_lat, max_lat, min_lon, max_lon = get_bounds(lat, lon, radius_km)
+    
+    # Filter hospitals within bounding box
+    hospitals = Hospitals.objects.filter(
+        latitude__gte=min_lat, latitude__lte=max_lat,
+        longitude__gte=min_lon, longitude__lte=max_lon
+    )
+
+    # Further filter by distance
+    finallist = [hospital for hospital in hospitals if distance(lat, lon, float(hospital.latitude), float(hospital.longitude)) < radius_km]
+    
+    return finallist
+
 def table(request):
-    from ipware import get_client_ip
-    client_ip, is_routable = get_client_ip(request)
-    if client_ip is None:
-        print("Unable to get the client's IP address")
+    lat = request.GET.get('latitude')
+    lon = request.GET.get('longitude')
+
+    print("================================================================")
+    print('latitude is:', lat, 'longitude is:', lon)
+
+    # Ensure lat and lon are floats
+    lat = float(lat) if lat else None
+    lon = float(lon) if lon else None
+
+    if lat and lon:
+        finallist = get_hospitals_within_radius(lat, lon, radius_km=25)
     else:
-        print("We got the client's IP address")
-        if is_routable:
-            print("The client's IP address is publicly routable on the Internet")
-        else:
-            print("The client's IP address is private")
-            if client_ip == '127.0.0.1':
-                import socket
-                hostname = socket.gethostname()
-                client_ip = socket.gethostbyname(hostname)
-                print("Your Computer Name is:" + hostname)
-                print("Your Computer IP Address is:" + client_ip)
-                client_ip = '59.92.10.179'
+        finallist = []
 
-
-    reader = geoip2.database.Reader(settings.BASE_DIR + '/divyadrishti/GeoLite2-City.mmdb')
-    response = reader.city(client_ip)
-    city = response.city.name
-    country = response.country.name
-    state = response.subdivisions.most_specific.name
-    print(state, "this is state")
-    lat = response.location.latitude
-    lon = response.location.longitude
-    print(country, city, 'latitude is:', lat, 'longitude is:', lon)
-    print("client ip is :", client_ip)
-
-    hospitals = Hospitals.objects.filter(state=state)
-    print("hospitals check")
-    # Python 3 program to calculate Distance Between Two Points on Earth
-    from math import radians, cos, sin, asin, sqrt
-
-    def distance(lat1, lat2, lon1, lon2):
-        # The math module contains a function named
-        # radians which converts from degrees to radians.
-        lon1 = radians(lon1)
-        lon2 = radians(lon2)
-        lat1 = radians(lat1)
-        lat2 = radians(lat2)
-
-        # Haversine formula
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-
-        c = 2 * asin(sqrt(a))
-
-        # Radius of earth in kilometers. Use 3956 for miles
-        r = 6371
-
-        # calculate the result
-        return (c * r)
-
-    finallist = []
-    print("finallist check")
-    for i in hospitals:
-        dis = distance(float(lat), float(i.latitude), float(lon), float(i.longitude))
-        if dis < 25:
-            finallist.append(i)
-    print("for loop check")
     return render(request, 'table.html', {"hospitalList": finallist})
 
 def get_client_ip(request):

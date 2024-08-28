@@ -23,8 +23,8 @@ class Hospitals(models.Model):
     locality = models.CharField(max_length=300)
     pincode = models.CharField(max_length=300)
     landline_no = models.CharField(max_length=300)
-    latitude = models.CharField(max_length=100)
-    longitude = models.CharField(max_length=100)
+    latitude = models.FloatField()  # Changed from CharField to FloatField
+    longitude = models.FloatField()  # Changed from CharField to FloatField
     altitude = models.CharField(max_length=100)
     type = models.CharField(max_length=100, null=False)
     state = models.CharField(max_length=100, null=False)
