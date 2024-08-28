@@ -1613,6 +1613,7 @@ kind: Service
 metadata:
   name: third-eye-service
 spec:
+  externalTrafficPolicy: Local  # Preserves the client's IP
   selector:
     app: third-eye
   ports:
