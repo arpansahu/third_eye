@@ -155,11 +155,11 @@ def get_client_ip(request):
         ip = x_forwarded_for.split(',')[0]
     else:
         ip = request.META.get('REMOTE_ADDR')
-    
-    # Validate if IP is public
-    if ip == '127.0.0.1' or ip.startswith('10.') or ip.startswith('192.168') or ip.startswith('172.16'):
-        return None
-    
+
+    # Exclude internal IPs (common in Kubernetes networking)
+    if ip.startswith('10.') or ip.startswith('192.168') or ip.startswith('172.'):
+        return None  # Handle this as needed (e.g., logging, fallback, etc.)
+
     return ip
 
 import requests
@@ -192,5 +192,10 @@ from django.http import JsonResponse
 
 def user_location_view(request):
     ip = get_client_ip(request)
+    if not ip:
+        return JsonResponse({
+            'error': 'Unable to determine public IP address.'
+        })
+    
     location = get_location_by_ip(ip)
     return JsonResponse(location)

@@ -32,7 +32,7 @@ urlpatterns = [
     path('',views.home),
     path('particles',views.particles),
     path('divyadrishti/', include('divyadrishti.urls')),
-
+    
     #sentry test view 
     path('sentry-debug/', trigger_error),
     path('large_resource/', large_resource)
