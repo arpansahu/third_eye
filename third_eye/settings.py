@@ -323,4 +323,4 @@ LOGGING = {
     },
 }
 
-CSRF_TRUSTED_ORIGINS = ['https://arpansahu.me', ]
+CSRF_TRUSTED_ORIGINS = ['https://third-eye.arpansahu.me', ]
