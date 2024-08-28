@@ -155,6 +155,11 @@ def get_client_ip(request):
         ip = x_forwarded_for.split(',')[0]
     else:
         ip = request.META.get('REMOTE_ADDR')
+    
+    # Validate if IP is public
+    if ip == '127.0.0.1' or ip.startswith('10.') or ip.startswith('192.168') or ip.startswith('172.16'):
+        return None
+    
     return ip
 
 import requests
