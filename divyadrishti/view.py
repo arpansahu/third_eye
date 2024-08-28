@@ -199,3 +199,11 @@ def user_location_view(request):
     
     location = get_location_by_ip(ip)
     return JsonResponse(location)
+
+def debug_headers_view(request):
+    headers = {
+        'X-Forwarded-For': request.META.get('HTTP_X_FORWARDED_FOR'),
+        'X-Real-IP': request.META.get('HTTP_X_REAL_IP'),
+        'Remote-Addr': request.META.get('REMOTE_ADDR'),
+    }
+    return JsonResponse(headers)
