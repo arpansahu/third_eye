@@ -102,8 +102,9 @@
     <header class="container-fluid">
         <div class="row w-100">
             <div class="col-md-6 d-flex align-items-center">
-                <img src="{% static 'third_eye.png' %}" alt="Third Eye Logo" style="max-width: 100px; height: auto;">
-            </div>
+                <a href="{% url 'home' %}">
+                    <img src="{% static 'third_eye.png' %}" alt="Third Eye Logo" style="max-width: 100px; height: auto;">
+                </a>            </div>
             <div class="col-md-6 d-flex justify-content-end align-items-center">
                 <nav>
                     <a href="{% url 'divyadrishti' %}">Third Eye : Your Insight</a>

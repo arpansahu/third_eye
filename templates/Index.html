@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Medical Facilities{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="padding-top: 30px;">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title" style="font-size: 24px; font-weight: bold;">Check for Disease</h5>
+                    <h6 class="card-text" style="font-size: 16px;">Our system helps you identify potential diseases based on your symptoms. Click the button below to start the process.</p>
+                    <div class="d-flex justify-content-center">
+                        <a href="{% url 'divyadrishti' %}" class="btn btn-primary">Click Here</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}

@@ -29,10 +29,10 @@ def large_resource(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('',views.home),
+    path('',views.home, name='home'),
     path('particles',views.particles),
     path('divyadrishti/', include('divyadrishti.urls')),
-    
+
     #sentry test view 
     path('sentry-debug/', trigger_error),
     path('large_resource/', large_resource)
