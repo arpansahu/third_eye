@@ -135,6 +135,8 @@ def get_hospitals_within_radius(lat, lon, radius_km):
     return hospitals
 
 def table(request):
+    print("=============================================================")
+    print("Inside Table View")
     lat = request.GET.get('latitude')
     lon = request.GET.get('longitude')
 
