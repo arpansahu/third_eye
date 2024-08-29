@@ -86,9 +86,19 @@ def get_hospitals_within_radius(lat, lon, radius_km):
 
 
 def table(request):
-    lat, lon = map(lambda x: float(request.GET.get(x, None)), ['latitude', 'longitude'])
-    finallist = get_hospitals_within_radius(lat, lon, radius_km=25) if lat and lon else []
-    return render(request, 'table.html', {"hospitalList": finallist})
+    lat = request.GET.get('latitude')
+    lon = request.GET.get('longitude')
+
+    if lat is not None and lon is not None:
+        try:
+            lat = float(lat)
+            lon = float(lon)
+            final_list = get_hospitals_within_radius(lat, lon, radius_km=25)
+        except ValueError:
+            final_list = []  # Handle invalid float conversion
+    else:
+        final_list = []
+    return render(request, 'table.html', {"hospitalList": final_list})
 
 
 def get_client_ip(request):
