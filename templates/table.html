@@ -1,96 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
+ {% extends 'base.html' %}
 {% load static %}
-<head>
-	<title>Third Eye (Divya Drishti)</title>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-<!--===============================================================================================-->	
-	<link rel="icon" type="image/png" href="{% static 'favicon.ico' %}"/>
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{% static 'tables/vendor/bootstrap/css/bootstrap.min.css' %}">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{% static 'tables/fonts/font-awesome-4.7.0/css/font-awesome.min.css' %}">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{% static 'tables/vendor/animate/animate.css' %}">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{% static 'tables/vendor/select2/select2.min.css' %}">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{% static 'tables/vendor/perfect-scrollbar/perfect-scrollbar.css' %}">
-<!--===============================================================================================-->
-	<link rel="stylesheet" type="text/css" href="{% static 'tables/css/util.css' %}">
-	<link rel="stylesheet" type="text/css" href="{% static 'tables/css/main.css' %}">
-<!--===============================================================================================-->
-    <link href="{% static 'maps/style.css' %}" rel="stylesheet">
- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+{% block title %}Medical Facilities{% endblock %}
 
-</head>
-<body style="background: #1B1B1B;">
-
-<div id="particles-js" style="  height: 100%;
-  width: 100%;overflow-x: hidden;overflow-y: hidden;
-  position: absolute;">
-        <!---from here form start ---->
-          <div class="container" style="position: absolute" >
-                <div class="row">
-                    <div class="col-md-4">
-                        <div style="max-width: 400px;position: fixed;height: 600px;margin-top: 30px;margin-left: 20px;border-radius: 25px;"  id="map">  </div>
-                        <script src="{% static 'maps/script.js' %}"></script>
-	                    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3xCaaguvAwQOBctk2TsT8Zqbr59WyNpE&callback=initMap"></script>
+{% block content %}
+<div class="container-fluid" style="padding-top: 30px;">
+    <div class="row">
+        <!-- Map Column -->
+        <div class="col-md-4">
+            <div class="map-container" style="max-width: 100%; height: 600px; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);">
+                <div id="map" style="width: 100%; height: 100%; border-radius: 15px;"></div>
+                <div style="max-width: 400px;position: fixed;height: 600px;margin-top: 30px;margin-left: 20px;border-radius: 25px;"  id="map">  </div>
+                    {% comment %} <script src="{% static 'maps/script.js' %}"></script>
+                    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3xCaaguvAwQOBctk2TsT8Zqbr59WyNpE&callback=initMap"></script> {% endcomment %}
+            </div>
+        </div>
+        
+        <!-- Table Column -->
+        <div class="col-md-8">
+            <div class="card" style="border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);">
+                <div class="card-body" style="height: 600px; overflow-y: auto;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Health Facility</th>
+                                <th>Address</th>
+                                <th>Contact</th>
+                                <th>Facility Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for i in hospitalList %}
+                            <tr>
+                                <td>{{ i.name }}</td>
+                                <td>{{ i.address }} {{ i.street }} {{ i.landmark }} {{ i.locality }} {{ i.pincode }}</td>
+                                <td>{{ i.landline_no }}</td>
+                                <td>{{ i.type }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                    <div class="col-md-8">
-                        <div class="limiter" >
-                            <div class="container-table1000" >
-                                <div class="wrap-table100" style="height: 650px; overflow-y: scroll; overflow-x: hidden;">
-                                    <div class="table100">
-                                        <table style="max-width: 800px; margin-left: 10px ;border-radius: 25px;">
-                                            <thead>
-                                                <tr class="table100-head">
-                                                    <th class="column1">Health Facility</th>
-                                                    <th class="column1">Address</th>
-                                                    <th class="column6">Contact</th>
-                                                    <th class="column6">Facility Type</th>
-
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                            {% for i in hospitalList %}
-                                                    <tr>
-                                                        <td class="column1">{{ i.name }}</td>
-                                                        <td class="column1" style="width: 800px">{{ i.address }} {{ i.street }} {{ i.landmark }} {{ i.locality }} {{ i.pincode }}</td>
-                                                        <td class="column6">{{ i.landline_no }}</td>
-                                                        <td class="column6">{{ i.type }}</td>
-
-                                                    </tr>
-                                            {% endfor %}<br>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-          </div>
-
-                            <!---from here form ends ---->
+            </div>
+        </div>
+    </div>
 </div>
-  <!---scripts here for particle js  ---->
-    <script src="{% static 'particles.js' %}"></script>
-    <script src="{% static 'app.js' %}"></script>
+{% endblock %}
 
-<!--===============================================================================================-->
-	<script src="vendor/jquery/jquery-3.2.1.min.js"></script>
-<!--===============================================================================================-->
-	<script src="vendor/bootstrap/js/popper.js"></script>
-	<script src="vendor/bootstrap/js/bootstrap.min.js"></script>
-<!--===============================================================================================-->
-	<script src="vendor/select2/select2.min.js"></script>
-<!--===============================================================================================-->
-	<script src="js/main.js"></script>
-
-</body>
-</html>
+{% block scripts %}
+<script src="{% static 'maps/script.js' %}"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3xCaaguvAwQOBctk2TsT8Zqbr59WyNpE&callback=initMap"></script>
+{% endblock %}

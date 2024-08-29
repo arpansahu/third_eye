@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Third Eye (Divya Drishti){% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'favicon.ico' %}"/>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- JavaScript Libraries -->
+    <script src="https://js.sentry-cdn.com/4b2332139f54c8c9ecee23f63f6a9775.min.js" crossorigin="anonymous"></script>
+
+    <!-- Additional head content -->
+    {% block head %}{% endblock %}
+    
+    <style>
+        /* Fullscreen particles background */
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1; /* Ensure it stays in the background */
+        }
+
+        /* Flexbox layout for body to manage footer position */
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1B1B1B;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* Header styling */
+        header {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Style for header navigation */
+        header nav a {
+            margin-right: 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        header nav a:hover {
+            color: #FFD700; /* Optional hover color for links */
+        }
+        
+        /* Footer styling */
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+
+        footer .nav1 {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px; /* Space between icons */
+        }
+
+        footer .nav1 a {
+            color: #fff;
+            font-size: 40px; /* Larger size for icons */
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        footer .nav1 a:hover {
+            color: #FFD700; /* Optional hover color for social icons */
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div> <!-- Particles background -->
+
+    <header class="container-fluid">
+        <div class="row w-100">
+            <div class="col-md-6 d-flex align-items-center">
+                <img src="{% static 'third_eye.png' %}" alt="Third Eye Logo" style="max-width: 100px; height: auto;">
+            </div>
+            <div class="col-md-6 d-flex justify-content-end align-items-center">
+                <nav>
+                    <a href="{% url 'divyadrishti' %}">Third Eye : Your Insight</a>
+                    <a href="https://github.com/arpansahu/Third-Eye-Complete-With-a-web-app">Git Repo</a>
+                    <a href="/admin/">Admin Panel</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        {% block content %}
+        <!-- Main content will be inserted here -->
+        {% endblock %}
+    </main>
+
+    <footer>
+        <div class="nav1">
+            <a href="https://www.facebook.com/arpanrocks95" class="fa fa-facebook"></a>
+            <a href="https://twitter.com/arpansahu_" class="fa fa-twitter"></a>
+            <a href="https://www.linkedin.com/in/arpansahu/" class="fa fa-linkedin"></a>
+            <a href="https://www.instagram.com/arpansahu/" class="fa fa-instagram"></a>
+            <a href="https://www.github.com/arpansahu/" class="fa fa-github"></a>
+        </div>
+    </footer>
+
+    <!-- Particles.js -->
+    <script src="{% static 'particles.js' %}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            particlesJS.load('particles-js', '{% static "particles.json" %}', function() {
+                console.log('particles.js loaded - callback');
+            });
+        });
+    </script>
+
+    <!-- Additional scripts -->
+    <script src="{% static 'app.js' %}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

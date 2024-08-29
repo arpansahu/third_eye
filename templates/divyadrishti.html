@@ -1,75 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends 'base.html' %}
 {% load static %}
-<head>
-    <style type="text/css">
-        html,body{
-        overflow-y:hidden;
-        overflow-x:hidden;
-        }
-        select {
-          width: 100%;
-          padding: 16px 20px;
-          border: none;
-          border-radius: 4px;
-          background-color: white;
-            -webkit-text-fill-color: #1B1B1B
-        }
-    </style>
-    <meta charset="UTF-8">
-    <title>Third Eye</title>
-    <script src="https://js.sentry-cdn.com/4b2332139f54c8c9ecee23f63f6a9775.min.js" crossorigin="anonymous"></script>
-</head>
-    <body style="background-color: #1B1B1B ; -webkit-text-fill-color:white" >
-    <div id="particles-js">
+{% block title %}Third Eye : Your Insight{% endblock %}
 
-        <!---from here form start ---->
-                <div class="container" style="position: absolute;margin-left: 500px;margin-top: 10px;">
-                <strong><h6 style="font-family: 'Times New Roman';margin-left: 40px; font-size: xx-large">Third Eye : Your Insight</h6></strong>
+{% block head %}
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+{% endblock %}
 
+{% block content %}
+<div class="container" style="position: relative; margin-top: 50px; max-width: 600px;">
 
-                            <form method="post" enctype="multipart/form-data">
-                                {% csrf_token %}
+    <form method="post" enctype="multipart/form-data" class="bg-dark p-4 rounded shadow">
+        {% csrf_token %}
 
-                                <strong>Enter Patient Name :</strong><input style="-webkit-text-fill-color: #1B1B1B" type="text" name="pname" value="arpansahu"><br>
-                                Select Symptom 1 : <select  name="Symptom1">
-                                    {% for i in Symptoms %}
-                                        <option value="{{ i.id }}"><strong>{{ i.symptom_name }}</strong></option>
-                                    {% endfor %}
-                                </select><br>
-                                Select Symptom 2 : <select name="Symptom2">
-                                    {% for j in Symptoms %}
-                                        <option value="{{ j.id }}"><strong>{{ j.symptom_name }}</strong></option>
-                                    {% endfor %}
-                                </select><br>
-                                Select Symptom 3 : <select name="Symptom3">
-                                    {% for l in Symptoms %}
-                                        <option value="{{ l.id }}"><strong>{{ l.symptom_name }}</strong></option>
-                                    {% endfor %}
-                                </select><br>
-                                Select Symptom 4 : <select name="Symptom4">
-                                    {% for m in Symptoms %}
-                                        <option value="{{ m.id }}"><strong>{{ m.symptom_name }}</strong></option>
-                                    {% endfor %}
-                                </select><br>
+        <div class="form-group">
+            <label for="pname" class="text-white"><strong>Enter Patient Name :</strong></label>
+            <input type="text" class="form-control" id="pname" name="pname" value="arpansahu">
+        </div>
 
-                                Select Symptom 5: <select name="Symptom5">
-                                    {% for n in Symptoms %}
-                                        <option value="{{ n.id }}"><strong>{{ n.symptom_name }}</strong></option>
-                                    {% endfor %}
-                                </select><br>
+        <div class="form-group">
+            <label for="Symptom1" class="text-white"><strong>Select Symptom 1 :</strong></label>
+            <select name="Symptom1" id="Symptom1" class="form-control">
+                {% for i in Symptoms %}
+                    <option value="{{ i.id }}">{{ i.symptom_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-                                <input style="-webkit-text-fill-color: #1B1B1B ; border: none; padding: 10px 22px;text-align: center;text-decoration: none;display: inline-block;font-size: 16px; margin-left: 110px; margin-top: 15px" type="Submit" value="Submit Symptoms"><br>
+        <div class="form-group">
+            <label for="Symptom2" class="text-white"><strong>Select Symptom 2 :</strong></label>
+            <select name="Symptom2" id="Symptom2" class="form-control">
+                {% for j in Symptoms %}
+                    <option value="{{ j.id }}">{{ j.symptom_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
+        <div class="form-group">
+            <label for="Symptom3" class="text-white"><strong>Select Symptom 3 :</strong></label>
+            <select name="Symptom3" id="Symptom3" class="form-control">
+                {% for l in Symptoms %}
+                    <option value="{{ l.id }}">{{ l.symptom_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-                            </form>
+        <div class="form-group">
+            <label for="Symptom4" class="text-white"><strong>Select Symptom 4 :</strong></label>
+            <select name="Symptom4" id="Symptom4" class="form-control">
+                {% for m in Symptoms %}
+                    <option value="{{ m.id }}">{{ m.symptom_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-                </div>
-        <!---till here form end ---->
-    </div>
-    <!---scripts here for particle js  ---->
-    <script src="{% static 'particles.js' %}"></script>
-    <script src="{% static 'app.js' %}"></script>
+        <div class="form-group">
+            <label for="Symptom5" class="text-white"><strong>Select Symptom 5 :</strong></label>
+            <select name="Symptom5" id="Symptom5" class="form-control">
+                {% for n in Symptoms %}
+                    <option value="{{ n.id }}">{{ n.symptom_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-    </body>
-</html>
+        <button type="submit" class="btn btn-primary btn-block">Submit Symptoms</button>
+    </form>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="{% static 'particles.js' %}"></script>
+<script src="{% static 'app.js' %}"></script>
+{% endblock %}

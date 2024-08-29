@@ -132,10 +132,7 @@ def get_hospitals_within_radius(lat, lon, radius_km):
         longitude__gte=min_lon, longitude__lte=max_lon
     )
 
-    # Further filter by distance
-    finallist = [hospital for hospital in hospitals if distance(lat, lon, float(hospital.latitude), float(hospital.longitude)) < radius_km]
-    
-    return finallist
+    return hospitals
 
 def table(request):
     lat = request.GET.get('latitude')
