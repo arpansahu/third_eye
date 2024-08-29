@@ -47,6 +47,37 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+    function updateUrlWithLocation(latitude, longitude) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('latitude', latitude);
+        url.searchParams.set('longitude', longitude);
+        window.location.href = url.href;
+    }
+
+    function checkAndRequestLocation() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has('latitude') || !urlParams.has('longitude')) {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    updateUrlWithLocation(position.coords.latitude, position.coords.longitude);
+                }, function(error) {
+                    if (error.code === error.PERMISSION_DENIED) {
+                        alert("Location access is required to show nearby medical facilities. Please allow location access.");
+                    } else {
+                        alert("Error retrieving location: " + error.message);
+                    }
+                });
+            } else {
+                alert("Geolocation is not supported by this browser.");
+            }
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        checkAndRequestLocation();
+    });
+</script>
 <script src="{% static 'maps/script.js' %}"></script>
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC3xCaaguvAwQOBctk2TsT8Zqbr59WyNpE&callback=initMap"></script>
 {% endblock %}
