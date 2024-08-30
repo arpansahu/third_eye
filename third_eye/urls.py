@@ -18,7 +18,7 @@ from django.urls import path,include
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
-
+import time
 
 def trigger_error(request):
     division_by_zero = 1 / 0
