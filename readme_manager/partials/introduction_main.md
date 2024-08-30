@@ -1,6 +1,6 @@
-# arpansahu.me | Django Portfolio Project 
+# Third Eye | AI Disease Predictor
 
-This is a simple django portfolio project
+Simple Web App using Naive Bayes Machine Learning algorithm to Predict Diseases.
 
 ## Project Features
 
