@@ -4371,19 +4371,11 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 To run this project, you will need to add the following environment variables to your .env file
 
-MY_EMAIL_ADDRESS=
-
 SECRET_KEY=
 
 DEBUG=
 
 ALLOWED_HOSTS=
-
-MAIL_JET_API_KEY=
-
-MAIL_JET_API_SECRET=
-
-MAIL_JET_EMAIL_ADDRESS=
 
 AWS_ACCESS_KEY_ID=
 
@@ -4397,10 +4389,6 @@ DATABASE_URL=
 
 REDIS_CLOUD_URL=
 
-DOMAIN= 
-
-PROTOCOL=
-
 # SENTRY
 SENTRY_ENVIRONMENT=
 
@@ -4410,7 +4398,6 @@ SENTRY_DSH_URL=
 HARBOR_USERNAME=
 
 HARBOR_PASSWORD=
-
 
 
 
