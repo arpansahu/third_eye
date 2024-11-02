@@ -95,9 +95,7 @@ Scikit-learn is an open-source Python library widely used for machine learning a
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![Pandas](https://img.shields.io/badge/google--maps-%23150458.svg?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/maps)
 [![Google Maps](https://img.shields.io/badge/Google%20Maps-4285F4?style=for-the-badge&logo=google-maps&logoColor=white)](https://developers.google.com/maps)
-
-
-
+[![Rancher](https://img.shields.io/badge/Rancher-0075A8?style=for-the-badge&logo=rancher&logoColor=white)](https://rancher.com/)
 
 ## Demo
 
@@ -4169,9 +4167,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 [![Pandas](https://img.shields.io/badge/google--maps-%23150458.svg?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/maps)
 [![Google Maps](https://img.shields.io/badge/Google%20Maps-4285F4?style=for-the-badge&logo=google-maps&logoColor=white)](https://developers.google.com/maps)
-
-
-
+[![Rancher](https://img.shields.io/badge/Rancher-0075A8?style=for-the-badge&logo=rancher&logoColor=white)](https://rancher.com/)
 
 ## Environment Variables
 
