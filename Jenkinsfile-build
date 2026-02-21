@@ -2,18 +2,49 @@ pipeline {
     agent any
     parameters {
         booleanParam(name: 'skip_checks', defaultValue: false, description: 'Skip the Check for Changes stage')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip test stages for faster builds')
     }
     environment {
-        REGISTRY = "harbor.arpansahu.me"
-        REPOSITORY = "library/third_eye"
         IMAGE_TAG = "${env.BUILD_ID}"
         COMMIT_FILE = "${env.WORKSPACE}/last_commit.txt"
-        ENV_PROJECT_NAME = "third_eye"
+        BUILD_STATUS = 'NOT_BUILT'  // Initialize to prevent undefined errors
     }
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
+            }
+        }
+        stage('Setup Environment') {
+            steps {
+                script {
+                    // Load .env from Jenkins credentials
+                    withCredentials([file(credentialsId: 'third_eye_env_file', variable: 'ENV_FILE')]) {
+                        // Remove existing .env file if it exists (handles read-only files)
+                        sh 'rm -f .env || true'
+                        
+                        def envContent = readFile(file: env.ENV_FILE)
+                        writeFile(file: '.env', text: envContent)
+                        
+                        // Parse and set environment variables
+                        envContent.split('\n').each { line ->
+                            if (line && !line.startsWith('#') && line.contains('=')) {
+                                def parts = line.split('=', 2)
+                                if (parts.length == 2) {
+                                    def key = parts[0].trim()
+                                    def value = parts[1].trim()
+                                    env."${key}" = value
+                                }
+                            }
+                        }
+                        
+                        // Set build-specific variables
+                        env.BUILD_PROJECT_NAME = "${env.ENV_PROJECT_NAME}_build"
+                        env.PROJECT_NAME_WITH_DASH = env.ENV_PROJECT_NAME.replace('_', '-')
+                        env.REGISTRY = env.DOCKER_REGISTRY
+                        env.REPOSITORY = "${env.DOCKER_REPOSITORY}/${env.DOCKER_IMAGE_NAME}"
+                    }
+                }
             }
         }
         stage('Check for Changes') {
@@ -65,14 +96,57 @@ pipeline {
                 }
             }
         }
-        stage('Dependencies') {
+        stage('Run Tests') {
             when {
-                expression { return BUILD_STATUS != 'NOT_BUILT' }
+                expression { 
+                    return BUILD_STATUS != 'NOT_BUILT' && !params.SKIP_TESTS 
+                }
             }
             steps {
                 script {
-                    // Copy .env file to the workspace
-                    sh "sudo cp /root/projectenvs/${ENV_PROJECT_NAME}/.env ${env.WORKSPACE}/"
+                    echo "Running unit tests..."
+                    sh """
+                    docker run --rm -v \$(pwd):/app -w /app --env-file .env python:3.10.7 \\
+                        bash -c 'pip install -q -r requirements.txt && \\
+                                 python -m pytest -m "not ui and not todo" --ignore=tests -v --tb=short'
+                    """
+                }
+            }
+        }
+        stage('Run UI Tests') {
+            when {
+                expression { 
+                    return BUILD_STATUS != 'NOT_BUILT' && !params.SKIP_TESTS 
+                }
+            }
+            steps {
+                script {
+                    echo "Running UI tests with Playwright..."
+                    sh """
+                    docker run --rm -v \$(pwd):/app -w /app --env-file .env \\
+                        mcr.microsoft.com/playwright/python:v1.40.0-jammy bash -c '
+                            pip install -q -r requirements.txt
+                            playwright install chromium
+                            python manage.py migrate --settings=third_eye.test_settings --verbosity=0
+                            python manage.py runserver 0.0.0.0:8000 --settings=third_eye.test_settings &
+                            SERVER_PID=\$!
+                            
+                            # Wait for server
+                            for i in {1..30}; do
+                                if curl -s http://127.0.0.1:8000/ > /dev/null 2>&1; then
+                                    echo "Server is ready"
+                                    break
+                                fi
+                                echo "Waiting for server... \$i"
+                                sleep 1
+                            done
+                            
+                            pytest */test_ui.py -m "ui and not todo" -v --tb=short -x || true
+                            TEST_RESULT=\$?
+                            kill \$SERVER_PID 2>/dev/null || true
+                            exit \$TEST_RESULT
+                        '
+                    """
                 }
             }
         }
@@ -103,7 +177,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'harbor-credentials', passwordVariable: 'DOCKER_REGISTRY_PASSWORD', usernameVariable: 'DOCKER_REGISTRY_USERNAME')]) {
                     script {
-                        // Log in to Docker registry using environment variables without direct interpolation
+                        // Log in to Docker registry
                         sh '''
                         echo $DOCKER_REGISTRY_PASSWORD | docker login ${REGISTRY} -u $DOCKER_REGISTRY_USERNAME --password-stdin
                         '''
@@ -117,6 +191,23 @@ pipeline {
                 }
             }
         }
+        stage('Sentry Release') {
+            when {
+                expression { return BUILD_STATUS != 'NOT_BUILT' }
+            }
+            steps {
+                script {
+                    withCredentials([string(credentialsId: 'sentry-auth-token', variable: 'SENTRY_AUTH_TOKEN')]) {
+                        sh """
+                        VERSION=\$(git rev-parse HEAD)
+                        sentry-cli releases -o ${env.SENTRY_ORG} -p ${env.SENTRY_PROJECT} new \$VERSION || true
+                        sentry-cli releases -o ${env.SENTRY_ORG} -p ${env.SENTRY_PROJECT} set-commits \$VERSION --auto || true
+                        sentry-cli releases -o ${env.SENTRY_ORG} -p ${env.SENTRY_PROJECT} finalize \$VERSION || true
+                        """
+                    }
+                }
+            }
+        }
     }
     post {
         success {
@@ -126,63 +217,77 @@ pipeline {
                 }
                 
                 // Send success notification email
-                sh """curl -s \
-                -X POST \
-                --user $MAIL_JET_API_KEY:$MAIL_JET_API_SECRET \
-                https://api.mailjet.com/v3.1/send \
-                -H "Content-Type:application/json" \
-                -d '{
-                    "Messages":[
-                            {
-                                    "From": {
-                                            "Email": "$MAIL_JET_EMAIL_ADDRESS",
-                                            "Name": "ArpanSahuOne Jenkins Notification"
-                                    },
-                                    "To": [
-                                            {
-                                                    "Email": "$MY_EMAIL_ADDRESS",
-                                                    "Name": "Development Team"
-                                            }
-                                    ],
-                                    "Subject": "${currentBuild.description}",
-                                    "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} : ${currentBuild.description}",
-                                    "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} : ${currentBuild.description} </h3> <br> <p> Build Url: ${env.BUILD_URL}  </p>"
-                            }
-                    ]
-                }'"""
+                withCredentials([
+                    string(credentialsId: 'mailjet-api-key', variable: 'MAIL_JET_API_KEY'),
+                    string(credentialsId: 'mailjet-api-secret', variable: 'MAIL_JET_API_SECRET')
+                ]) {
+                    sh """curl -s \
+                    -X POST \
+                    --user \$MAIL_JET_API_KEY:\$MAIL_JET_API_SECRET \
+                    https://api.mailjet.com/v3.1/send \
+                    -H "Content-Type:application/json" \
+                    -d '{
+                        "Messages":[
+                                {
+                                        "From": {
+                                                "Email": "${env.MAIL_JET_EMAIL_ADDRESS}",
+                                                "Name": "Jenkins Notification"
+                                        },
+                                        "To": [
+                                                {
+                                                        "Email": "${env.MY_EMAIL_ADDRESS}",
+                                                        "Name": "Development Team"
+                                                }
+                                        ],
+                                        "Subject": "${currentBuild.description}",
+                                        "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} : ${currentBuild.description}",
+                                        "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} : ${currentBuild.description} </h3> <br> <p> Build Url: ${env.BUILD_URL}  </p>"
+                                }
+                        ]
+                    }' || true"""
+                }
 
-                // Trigger third_eye job only if the build is stable
-                build job: 'third_eye', parameters: [booleanParam(name: 'DEPLOY', value: true)], wait: false
+                // Trigger deployment job dynamically
+                build job: "${env.ENV_PROJECT_NAME}", parameters: [booleanParam(name: 'DEPLOY', value: true)], wait: false
             }
         }
         failure {
             script {
                 // Send failure notification email
-                sh """curl -s \
-                -X POST \
-                --user $MAIL_JET_API_KEY:$MAIL_JET_API_SECRET \
-                https://api.mailjet.com/v3.1/send \
-                -H "Content-Type:application/json" \
-                -d '{
-                    "Messages":[
-                            {
-                                    "From": {
-                                            "Email": "$MAIL_JET_EMAIL_ADDRESS",
-                                            "Name": "ArpanSahuOne Jenkins Notification"
-                                    },
-                                    "To": [
-                                            {
-                                                    "Email": "$MY_EMAIL_ADDRESS",
-                                                    "Name": "Development Team"
-                                            }
-                                    ],
-                                    "Subject": "${currentBuild.fullDisplayName} build failed",
-                                    "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} build failed ${currentBuild.description} ",
-                                    "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} build failed </h3> <br> <p> ${currentBuild.description}  </p>"
-                            }
-                    ]
-                }'"""
+                withCredentials([
+                    string(credentialsId: 'mailjet-api-key', variable: 'MAIL_JET_API_KEY'),
+                    string(credentialsId: 'mailjet-api-secret', variable: 'MAIL_JET_API_SECRET')
+                ]) {
+                    sh """curl -s \
+                    -X POST \
+                    --user \$MAIL_JET_API_KEY:\$MAIL_JET_API_SECRET \
+                    https://api.mailjet.com/v3.1/send \
+                    -H "Content-Type:application/json" \
+                    -d '{
+                        "Messages":[
+                                {
+                                        "From": {
+                                                "Email": "${env.MAIL_JET_EMAIL_ADDRESS}",
+                                                "Name": "Jenkins Notification"
+                                        },
+                                        "To": [
+                                                {
+                                                        "Email": "${env.MY_EMAIL_ADDRESS}",
+                                                        "Name": "Development Team"
+                                                }
+                                        ],
+                                        "Subject": "${currentBuild.fullDisplayName} build failed",
+                                        "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} build failed ${currentBuild.description} ",
+                                        "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} build failed </h3> <br> <p> ${currentBuild.description}  </p>"
+                                }
+                        ]
+                    }' || true"""
+                }
             }
+        }
+        always {
+            // Cleanup
+            sh 'rm -f .env || true'
         }
     }
 }
