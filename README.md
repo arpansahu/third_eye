@@ -2162,34 +2162,48 @@ FROM python:3.10.7
 
 WORKDIR /app
 
+# Copy only requirements.txt first to leverage Docker cache
+COPY requirements.txt .
+
+# Install dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
 COPY . .
 
-RUN pip3 install -r requirements.txt
-
+# Expose necessary ports
 EXPOSE 8008
 
-CMD bash -c "python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8008 third_eye.wsgi"
+# Start the application
+# Note: For Kubernetes deployments, migrations are handled by Jenkins (see Jenkinsfile-deploy)
+#       For Docker Compose deployments, migrations run here on container startup
+CMD python manage.py migrate --noinput && \
+    echo "Running collectstatic..." && \
+    python manage.py collectstatic --noinput --verbosity 2 && \
+    echo "✅ Collectstatic completed successfully" && \
+    gunicorn --bind 0.0.0.0:8008 third_eye.wsgi
 ```
 
 Create a file named docker-compose.yml and add following lines in it
 
 ```bash
-version: '3'
+version: '3.8'
 
 services:
   web:
-    build:  # This section will be used when running locally
-      context: .
-      dockerfile: Dockerfile
-    image: harbor.arpansahu.me/library/third_eye:latest
-    env_file: ./.env
-    command: bash -c "python manage.py makemigrations && python manage.py migrate && gunicorn --bind 0.0.0.0:8008 third_eye.wsgi"
-    container_name: third_eye
-    volumes:
-      - .:/app
-    ports:
-      - "8008:8008"
+    image: ${DOCKER_REGISTRY}/${DOCKER_REPOSITORY}/${DOCKER_IMAGE_NAME}:latest
+    container_name: ${ENV_PROJECT_NAME}
     restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${DOCKER_PORT}:8008"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 ```
 
 ### **What is Difference in Dockerfile and docker-compose.yml?**
@@ -10296,32 +10310,59 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 To run this project, you will need to add the following environment variables to your .env file
 
+# Core Django Settings
 SECRET_KEY=
+DEBUG=False
+ALLOWED_HOSTS=yourdomain.com localhost 127.0.0.1
 
-DEBUG=
+# Email Configuration (Mailjet)
+MAIL_JET_API_KEY=
+MAIL_JET_API_SECRET=
+MAIL_JET_EMAIL_ADDRESS=
+MY_EMAIL_ADDRESS=
 
-ALLOWED_HOSTS=
-
+# Cloud Storage (MinIO/S3/Blackblaze)
+USE_S3=True
 AWS_ACCESS_KEY_ID=
-
 AWS_SECRET_ACCESS_KEY=
-
 AWS_STORAGE_BUCKET_NAME=
+AWS_S3_ENDPOINT_URL=
+AWS_S3_CUSTOM_DOMAIN=
+BUCKET_TYPE=MINIO
 
-BUCKET_TYPE=
+# Database
+DATABASE_URL=postgres://user:pass@host:port/dbname
 
-DATABASE_URL=
+# Redis Cache
+REDIS_CLOUD_URL=rediss://default:pass@host:port
 
-REDIS_CLOUD_URL=
+# Domain Configuration
+DOMAIN=third-eye.arpansahu.me
+PROTOCOL=https
 
-# SENTRY
-SENTRY_ENVIRONMENT=
+# Docker Configuration
+DOCKER_PORT=8008
+SERVER_NAME=third-eye.arpansahu.me
 
-SENTRY_DSH_URL=
+# Docker Registry (Harbor)
+DOCKER_REGISTRY=harbor.arpansahu.me
+DOCKER_REPOSITORY=library
+DOCKER_IMAGE_NAME=third_eye
 
-# deploy_kube.sh requirements
+# Jenkins
+JENKINS_DOMAIN=jenkins.arpansahu.me
+
+# Sentry Error Tracking
+SENTRY_DSH_URL=https://...@sentry.io/projectid
+SENTRY_ORG=arpansahu
+SENTRY_PROJECT=third_eye
+SENTRY_ENVIRONMENT=production
+
+# Project Naming
+ENV_PROJECT_NAME=third_eye
+
+# Deploy Kubernetes Requirements
 HARBOR_USERNAME=
-
 HARBOR_PASSWORD=
 
 
