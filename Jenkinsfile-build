@@ -156,35 +156,30 @@ pipeline {
                 }
                 
                 // Send success notification email
-                withCredentials([
-                    string(credentialsId: 'mailjet-api-key', variable: 'MAIL_JET_API_KEY'),
-                    string(credentialsId: 'mailjet-api-secret', variable: 'MAIL_JET_API_SECRET')
-                ]) {
-                    sh """curl -s \
-                    -X POST \
-                    --user \$MAIL_JET_API_KEY:\$MAIL_JET_API_SECRET \
-                    https://api.mailjet.com/v3.1/send \
-                    -H "Content-Type:application/json" \
-                    -d '{
-                        "Messages":[
-                                {
-                                        "From": {
-                                                "Email": "${env.MAIL_JET_EMAIL_ADDRESS}",
-                                                "Name": "Jenkins Notification"
-                                        },
-                                        "To": [
-                                                {
-                                                        "Email": "${env.MY_EMAIL_ADDRESS}",
-                                                        "Name": "Development Team"
-                                                }
-                                        ],
-                                        "Subject": "${currentBuild.description}",
-                                        "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} : ${currentBuild.description}",
-                                        "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} : ${currentBuild.description} </h3> <br> <p> Build Url: ${env.BUILD_URL}  </p>"
-                                }
-                        ]
-                    }' || true"""
-                }
+                sh """curl -s \
+                -X POST \
+                --user $MAIL_JET_API_KEY:$MAIL_JET_API_SECRET \
+                https://api.mailjet.com/v3.1/send \
+                -H "Content-Type:application/json" \
+                -d '{
+                    "Messages":[
+                            {
+                                    "From": {
+                                            "Email": "$MAIL_JET_EMAIL_ADDRESS",
+                                            "Name": "ArpanSahuOne Jenkins Notification"
+                                    },
+                                    "To": [
+                                            {
+                                                    "Email": "$MY_EMAIL_ADDRESS",
+                                                    "Name": "Development Team"
+                                            }
+                                    ],
+                                    "Subject": "${currentBuild.description}",
+                                    "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} : ${currentBuild.description}",
+                                    "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} : ${currentBuild.description} </h3> <br> <p> Build Url: ${env.BUILD_URL}  </p>"
+                            }
+                    ]
+                }'"""
 
                 // Trigger deployment job dynamically
                 build job: "${env.ENV_PROJECT_NAME}", parameters: [booleanParam(name: 'DEPLOY', value: true)], wait: false
@@ -193,35 +188,30 @@ pipeline {
         failure {
             script {
                 // Send failure notification email
-                withCredentials([
-                    string(credentialsId: 'mailjet-api-key', variable: 'MAIL_JET_API_KEY'),
-                    string(credentialsId: 'mailjet-api-secret', variable: 'MAIL_JET_API_SECRET')
-                ]) {
-                    sh """curl -s \
-                    -X POST \
-                    --user \$MAIL_JET_API_KEY:\$MAIL_JET_API_SECRET \
-                    https://api.mailjet.com/v3.1/send \
-                    -H "Content-Type:application/json" \
-                    -d '{
-                        "Messages":[
-                                {
-                                        "From": {
-                                                "Email": "${env.MAIL_JET_EMAIL_ADDRESS}",
-                                                "Name": "Jenkins Notification"
-                                        },
-                                        "To": [
-                                                {
-                                                        "Email": "${env.MY_EMAIL_ADDRESS}",
-                                                        "Name": "Development Team"
-                                                }
-                                        ],
-                                        "Subject": "${currentBuild.fullDisplayName} build failed",
-                                        "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} build failed ${currentBuild.description} ",
-                                        "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} build failed </h3> <br> <p> ${currentBuild.description}  </p>"
-                                }
-                        ]
-                    }' || true"""
-                }
+                sh """curl -s \
+                -X POST \
+                --user $MAIL_JET_API_KEY:$MAIL_JET_API_SECRET \
+                https://api.mailjet.com/v3.1/send \
+                -H "Content-Type:application/json" \
+                -d '{
+                    "Messages":[
+                            {
+                                    "From": {
+                                            "Email": "$MAIL_JET_EMAIL_ADDRESS",
+                                            "Name": "ArpanSahuOne Jenkins Notification"
+                                    },
+                                    "To": [
+                                            {
+                                                    "Email": "$MY_EMAIL_ADDRESS",
+                                                    "Name": "Development Team"
+                                            }
+                                    ],
+                                    "Subject": "${currentBuild.fullDisplayName} build failed",
+                                    "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} build failed ${currentBuild.description} ",
+                                    "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} build failed </h3> <br> <p> ${currentBuild.description}  </p>"
+                            }
+                    ]
+                }'"""
             }
         }
         always {
