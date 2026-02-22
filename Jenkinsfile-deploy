@@ -6,18 +6,9 @@ pipeline {
         string(name: 'IMAGE_TAG', defaultValue: '', description: 'Image tag to deploy (leave empty to auto-detect from build)')
     }
     environment {
-        REGISTRY = "harbor.arpansahu.space"
-        REPOSITORY = "library/third_eye"
+        // Only Jenkins-computed values here (before .env is loaded)
+        IMAGE_TAG = "latest"
         KUBECONFIG = "${env.WORKSPACE}/kubeconfig"
-        NGINX_CONF = "/etc/nginx/sites-available/third-eye"
-        ENV_PROJECT_NAME = "third_eye"
-        DOCKER_PORT = "8008"
-        PROJECT_NAME_WITH_DASH = "third-eye"
-        SERVER_NAME = "third-eye.arpansahu.space"
-        BUILD_PROJECT_NAME = "third_eye_build"
-        JENKINS_DOMAIN = "jenkins.arpansahu.space"
-        SENTRY_ORG = "arpansahu"
-        SENTRY_PROJECT = "third_eye"
     }
     stages {
         stage('Initialize') {
@@ -40,12 +31,40 @@ pipeline {
                         // Remove existing .env file if it exists (handles read-only files)
                         sh 'rm -f .env || true'
                         
-                        sh "cp \$ENV_FILE .env"
+                        // Read the credentials file and write to .env using Jenkins API
+                        def envContent = readFile(file: env.ENV_FILE)
+                        writeFile(file: '.env', text: envContent)
                         echo "✅ Environment file created successfully"
-                    }
-                }
-            }
-        }
+                        
+                        // Load environment variables from .env for use in pipeline
+                        def envVars = sh(script: 'cat .env | grep -v "^#" | grep -v "^\$" | xargs', returnStdout: true).trim()
+                        if (envVars) {
+                            envVars.split().each { envVar ->
+                                if (envVar.contains('=')) {
+                                    def parts = envVar.split('=', 2)
+                                    def key = parts[0]
+                                    def value = parts.length > 1 ? parts[1] : ''
+                                    if (key) {
+                                        env."${key}" = value
+                                    }
+                                }
+                            }
+                        }
+                        echo "✅ Environment variables loaded from .env"
+                        
+                        // Derive computed variables from base variables
+                        env.BUILD_PROJECT_NAME = "${env.ENV_PROJECT_NAME}_build"
+                        env.PROJECT_NAME_WITH_DASH = env.ENV_PROJECT_NAME.replace('_', '-')
+                        env.NGINX_CONF_PATH = "/etc/nginx/sites-available/${env.PROJECT_NAME_WITH_DASH}"
+                        
+                        // Set registry path for Docker operations
+                        env.REGISTRY = env.DOCKER_REGISTRY
+                        env.REPOSITORY = "${env.DOCKER_REPOSITORY}/${env.DOCKER_IMAGE_NAME}"
+                        
+                        echo "Computed BUILD_PROJECT_NAME: ${env.BUILD_PROJECT_NAME}"
+                        echo "Computed PROJECT_NAME_WITH_DASH: ${env.PROJECT_NAME_WITH_DASH}"
+                        echo "Computed NGINX_CONF_PATH: ${env.NGINX_CONF_PATH}"
+                        echo "Docker Image: ${env.REGISTRY}/${env.REPOSITORY}:${IMAGE_TAG}"
                     }
                 }
             }
@@ -67,22 +86,22 @@ pipeline {
             steps {
                 script {
                     // Check if the Nginx configuration file exists
-                    def configExists = sh(script: "test -f ${NGINX_CONF} && echo 'exists' || echo 'not exists'", returnStdout: true).trim()
+                    def configExists = sh(script: "test -f ${env.NGINX_CONF_PATH} && echo 'exists' || echo 'not exists'", returnStdout: true).trim()
 
                     if (configExists == 'not exists') {
                         echo "Nginx configuration file does not exist. Creating it now..."
 
-                        // Create or overwrite the NGINX_CONF file with the content of nginx.conf using sudo tee
-                        sh "sudo cat nginx.conf | sudo tee ${NGINX_CONF} > /dev/null"
+                        // Create or overwrite the NGINX_CONF_PATH file with the content of nginx.conf using sudo tee
+                        sh "sudo cat nginx.conf | sudo tee ${env.NGINX_CONF_PATH} > /dev/null"
 
                         // Replace placeholders in the configuration file
-                        sh "sudo sed -i 's|SERVER_NAME|${SERVER_NAME}|g' ${NGINX_CONF}"
-                        sh "sudo sed -i 's|DOCKER_PORT|${DOCKER_PORT}|g' ${NGINX_CONF}"
+                        sh "sudo sed -i 's|SERVER_NAME|${env.SERVER_NAME}|g' ${env.NGINX_CONF_PATH}"
+                        sh "sudo sed -i 's|DOCKER_PORT|${env.DOCKER_PORT}|g' ${env.NGINX_CONF_PATH}"
 
                         echo "Nginx configuration file created."
 
                         // Ensure Nginx is aware of the new configuration
-                        sh "sudo ln -sf ${NGINX_CONF} /etc/nginx/sites-enabled/"
+                        sh "sudo ln -sf ${env.NGINX_CONF_PATH} /etc/nginx/sites-enabled/"
                     } else {
                         echo "Nginx configuration file already exists."
                     }                    
@@ -97,10 +116,10 @@ pipeline {
                         echo "Using provided image tag: ${params.IMAGE_TAG}"
                         env.IMAGE_TAG = params.IMAGE_TAG
                     } else {
-                        echo "No image tag provided. Retrieving from ${BUILD_PROJECT_NAME}"
+                        echo "No image tag provided. Retrieving from ${env.BUILD_PROJECT_NAME}"
 
                         // Construct the API URL for the latest successful build
-                        def api_url = "https://${JENKINS_DOMAIN}/job/${BUILD_PROJECT_NAME}/lastSuccessfulBuild/api/json"
+                        def api_url = "https://${env.JENKINS_DOMAIN}/job/${env.BUILD_PROJECT_NAME}/lastSuccessfulBuild/api/json"
 
                         echo "Hitting API URL: ${api_url}"
                         
@@ -125,7 +144,7 @@ pipeline {
 
                     echo "Using image tag: ${env.IMAGE_TAG}"
 
-                    if (REGISTRY && REPOSITORY && env.IMAGE_TAG) {
+                    if (env.REGISTRY && env.REPOSITORY && env.IMAGE_TAG) {
                         if (params.DEPLOY_TYPE == 'kubernetes') {
                             // Replace the placeholder in the deployment YAML
                             sh "sed -i 's|:latest|:${env.IMAGE_TAG}|g' ${WORKSPACE}/deployment.yaml"
@@ -134,7 +153,7 @@ pipeline {
                         if (params.DEPLOY_TYPE == 'docker') {
                             // Update docker-compose.yml with correct image tag
                             sh """
-                            sed -i 's|image: .*|image: ${REGISTRY}/${REPOSITORY}:${env.IMAGE_TAG}|' docker-compose.yml
+                            sed -i 's|image: .*|image: ${env.REGISTRY}/${env.REPOSITORY}:${env.IMAGE_TAG}|' docker-compose.yml
                             """
                         }
                     } else {
@@ -152,16 +171,16 @@ pipeline {
                     if (params.DEPLOY_TYPE == 'docker') {
                         // Deploy using Docker Compose
                         sh 'docker compose down'
-                        sh 'docker rm -f ${ENV_PROJECT_NAME} || true'  // Remove any orphaned container
+                        sh "docker rm -f ${env.ENV_PROJECT_NAME} || true"  // Remove any orphaned container
                         sh 'docker compose pull'
                         sh 'docker compose up -d'
 
                         // Verify the container is running
-                        def containerRunning = sh(script: "docker ps -q -f name=${ENV_PROJECT_NAME}", returnStdout: true).trim()
+                        def containerRunning = sh(script: "docker ps -q -f name=${env.ENV_PROJECT_NAME}", returnStdout: true).trim()
                         if (!containerRunning) {
-                            error "Container ${ENV_PROJECT_NAME} is not running"
+                            error "Container ${env.ENV_PROJECT_NAME} is not running"
                         } else {
-                            echo "Container ${ENV_PROJECT_NAME} is running"
+                            echo "Container ${env.ENV_PROJECT_NAME} is running"
                             // Health check with retry mechanism (migrations + collectstatic take time)
                             sh """
                                 set +e  # Don't exit on error
@@ -175,7 +194,7 @@ pipeline {
                                 while [ \$ATTEMPT -lt \$MAX_RETRIES ]; do
                                     ATTEMPT=\$((ATTEMPT + 1))
                                     echo "Health check attempt \$ATTEMPT/\$MAX_RETRIES..."
-                                    HTTP_STATUS=\$(curl -s -o /dev/null -w "%{http_code}" -L http://localhost:${DOCKER_PORT} || echo "000")
+                                    HTTP_STATUS=\$(curl -s -o /dev/null -w "%{http_code}" -L http://localhost:${env.DOCKER_PORT} || echo "000")
                                     echo "HTTP Status: \$HTTP_STATUS"
                                     
                                     if [ "\$HTTP_STATUS" = "200" ] || [ "\$HTTP_STATUS" = "302" ]; then
@@ -194,19 +213,19 @@ pipeline {
                                 # Final check
                                 if [ "\$HTTP_STATUS" != "200" ] && [ "\$HTTP_STATUS" != "302" ]; then
                                     echo "❌ Service failed to start after \$MAX_RETRIES attempts"
-                                    docker logs ${ENV_PROJECT_NAME} || true
+                                    docker logs ${env.ENV_PROJECT_NAME} || true
                                     exit 1
                                 fi
                                 
                                 # Update Nginx configuration
-                                sudo sed -i 's|proxy_pass .*;|proxy_pass http://0.0.0.0:${DOCKER_PORT};|' ${NGINX_CONF}
+                                sudo sed -i 's|proxy_pass .*;|proxy_pass http://0.0.0.0:${env.DOCKER_PORT};|' ${env.NGINX_CONF_PATH}
                                 sudo nginx -s reload
                                 echo '✅ Nginx configuration updated and reloaded successfully.'
                                 
                                 # Scale down Kubernetes deployment if running
-                                replicas=\$(kubectl get deployment ${PROJECT_NAME_WITH_DASH}-app -o=jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
+                                replicas=\$(kubectl get deployment ${env.PROJECT_NAME_WITH_DASH}-app -o=jsonpath='{.spec.replicas}' 2>/dev/null || echo "0")
                                 if [ "\$replicas" != "" ] && [ "\$replicas" -gt 0 ]; then
-                                    kubectl scale deployment ${PROJECT_NAME_WITH_DASH}-app --replicas=0
+                                    kubectl scale deployment ${env.PROJECT_NAME_WITH_DASH}-app --replicas=0
                                     echo '✅ Kubernetes deployment scaled down successfully.'
                                 fi
                             """
@@ -219,11 +238,11 @@ pipeline {
                         sh 'kubectl cluster-info'
                         
                         // Delete existing secret if it exists
-                        sh "kubectl delete secret ${PROJECT_NAME_WITH_DASH}-secret || true"
+                        sh "kubectl delete secret ${env.PROJECT_NAME_WITH_DASH}-secret || true"
 
                         // Deploy to Kubernetes
                         sh """
-                        kubectl create secret generic ${PROJECT_NAME_WITH_DASH}-secret --from-env-file=${WORKSPACE}/.env
+                        kubectl create secret generic ${env.PROJECT_NAME_WITH_DASH}-secret --from-env-file=${WORKSPACE}/.env
                         kubectl apply -f ${WORKSPACE}/service.yaml
                         kubectl apply -f ${WORKSPACE}/deployment.yaml
                         """
@@ -232,10 +251,10 @@ pipeline {
                         sleep 60
 
                         // Check deployment status
-                        sh "kubectl describe deployment/${PROJECT_NAME_WITH_DASH}-app"
+                        sh "kubectl describe deployment/${env.PROJECT_NAME_WITH_DASH}-app"
                         
                         // Verify service and get NodePort
-                        def nodePort = sh(script: "kubectl get service ${PROJECT_NAME_WITH_DASH}-service -o=jsonpath='{.spec.ports[0].nodePort}'", returnStdout: true).trim()
+                        def nodePort = sh(script: "kubectl get service ${env.PROJECT_NAME_WITH_DASH}-service -o=jsonpath='{.spec.ports[0].nodePort}'", returnStdout: true).trim()
                         echo "Service NodePort: ${nodePort}"
 
                         // Get cluster IP address
@@ -250,8 +269,8 @@ pipeline {
                             if [ "\$HTTP_STATUS" -eq 200 ] || [ "\$HTTP_STATUS" -eq 302 ]; then
                                 echo "Service is reachable at http://${clusterIP}:${nodePort}"
 
-                                echo "Updating Nginx configuration at ${NGINX_CONF}..."
-                                sudo sed -i 's|proxy_pass .*;|proxy_pass http://${clusterIP}:${nodePort};|' ${NGINX_CONF}
+                                echo "Updating Nginx configuration at ${env.NGINX_CONF_PATH}..."
+                                sudo sed -i 's|proxy_pass .*;|proxy_pass http://${clusterIP}:${nodePort};|' ${env.NGINX_CONF_PATH}
                                 
                                 echo "Reloading Nginx..."
                                 sudo nginx -s reload
@@ -264,7 +283,7 @@ pipeline {
                                 echo "Kubernetes deployment successful."
                             else
                                 echo "Service health check failed. HTTP Status: \$HTTP_STATUS"
-                                kubectl logs -l app=${PROJECT_NAME_WITH_DASH} --tail=100 || true
+                                kubectl logs -l app=${env.PROJECT_NAME_WITH_DASH} --tail=100 || true
                                 exit 1
                             fi
                         """
@@ -274,27 +293,9 @@ pipeline {
                 }
             }
         }
-                            
-                            # Remove Docker container if running
-                            DOCKER_CONTAINER=\$(docker ps -q -f name=${env.ENV_PROJECT_NAME})
-                            if [ "\$DOCKER_CONTAINER" ]; then
-                                echo "Docker container ${env.ENV_PROJECT_NAME} is running. Removing it..."
-                                docker rm -f ${env.ENV_PROJECT_NAME}
-                            else
-                                echo "Docker container ${env.ENV_PROJECT_NAME} is not running. Skipping removal"
-                            fi
-                        else
-                            echo "Service is not reachable at http://${clusterIP}:${nodePort}. HTTP Status: \$HTTP_STATUS"
-                            exit 1
-                        fi
-                    """
-                    env.BUILD_STATUS = 'DEPLOYED'
-                }
-            }
-        }
         stage('Sentry Release') {
             when {
-                expression { params.DEPLOY && env.BUILD_STATUS == 'DEPLOYED' }
+                expression { params.DEPLOY }
             }
             steps {
                 script {
@@ -303,7 +304,6 @@ pipeline {
                         VERSION=\$(git rev-parse HEAD)
                         sentry-cli releases -o ${env.SENTRY_ORG} -p ${env.SENTRY_PROJECT} new \$VERSION || true
                         sentry-cli releases -o ${env.SENTRY_ORG} -p ${env.SENTRY_PROJECT} set-commits --auto \$VERSION || true
-                        sentry-cli releases -o ${env.SENTRY_ORG} -p ${env.SENTRY_PROJECT} deploys \$VERSION new -e ${env.SENTRY_ENVIRONMENT} || true
                         sentry-cli releases -o ${env.SENTRY_ORG} -p ${env.SENTRY_PROJECT} finalize \$VERSION || true
                         """
                     }
@@ -314,80 +314,68 @@ pipeline {
     post {
         success {
             script {
-                if (env.BUILD_STATUS == 'DEPLOYED') {
-                    withCredentials([
-                        string(credentialsId: 'mailjet-api-key', variable: 'MAIL_JET_API_KEY'),
-                        string(credentialsId: 'mailjet-api-secret', variable: 'MAIL_JET_API_SECRET')
-                    ]) {
-                        sh """curl -s \
-                        -X POST \
-                        --user \$MAIL_JET_API_KEY:\$MAIL_JET_API_SECRET \
-                        https://api.mailjet.com/v3.1/send \
-                        -H "Content-Type:application/json" \
-                        -d '{
-                            "Messages":[
-                                    {
-                                            "From": {
-                                                    "Email": "${env.MAIL_JET_EMAIL_ADDRESS}",
-                                                    "Name": "Jenkins Notification"
-                                            },
-                                            "To": [
-                                                    {
-                                                            "Email": "${env.MY_EMAIL_ADDRESS}",
-                                                            "Name": "Development Team"
-                                                    }
-                                            ],
-                                            "Subject": "Jenkins Build Pipeline your project ${currentBuild.fullDisplayName} Ran Successfully",
-                                            "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} is now deployed",
-                                            "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} is now deployed </h3> <br> <p> Build Url: ${env.BUILD_URL}  </p>"
-                                    }
-                            ]
-                        }' || true"""
-                    }
+                sh """curl -s \
+                -X POST \
+                --user ${env.MAIL_JET_API_KEY}:${env.MAIL_JET_API_SECRET} \
+                https://api.mailjet.com/v3.1/send \
+                -H "Content-Type:application/json" \
+                -d '{
+                    "Messages":[
+                            {
+                                    "From": {
+                                            "Email": "${env.MAIL_JET_EMAIL_ADDRESS}",
+                                            "Name": "ArpanSahuOne Jenkins Notification"
+                                    },
+                                    "To": [
+                                            {
+                                                    "Email": "${env.MY_EMAIL_ADDRESS}",
+                                                    "Name": "Development Team"
+                                            }
+                                    ],
+                                    "Subject": "Jenkins Build Pipeline your project ${currentBuild.fullDisplayName} Ran Successfully",
+                                    "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} is now deployed",
+                                    "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} is now deployed </h3> <br> <p> Build Url: ${env.BUILD_URL}  </p>"
+                            }
+                    ]
+                }' || true"""
 
-                    // Trigger common_readme job
-                    def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
-                    if (!commitMessage.contains("Automatic Update")) {
-                        def expandedProjectUrl = "https://github.com/arpansahu/${env.ENV_PROJECT_NAME}"
-                        build job: 'common_readme', parameters: [
-                            string(name: 'project_git_url', value: expandedProjectUrl),
-                            string(name: 'environment', value: 'prod')
-                        ], wait: false
-                    }
+                // Trigger common_readme job
+                def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
+                if (!commitMessage.contains("Automatic Update")) {
+                    def expandedProjectUrl = "https://github.com/arpansahu/${env.ENV_PROJECT_NAME}"
+                    build job: 'common_readme', parameters: [
+                        string(name: 'project_git_url', value: expandedProjectUrl),
+                        string(name: 'environment', value: 'prod')
+                    ], wait: false
                 }
             }
         }
         failure {
             script {
-                withCredentials([
-                    string(credentialsId: 'mailjet-api-key', variable: 'MAIL_JET_API_KEY'),
-                    string(credentialsId: 'mailjet-api-secret', variable: 'MAIL_JET_API_SECRET')
-                ]) {
-                    sh """curl -s \
-                    -X POST \
-                    --user \$MAIL_JET_API_KEY:\$MAIL_JET_API_SECRET \
-                    https://api.mailjet.com/v3.1/send \
-                    -H "Content-Type:application/json" \
-                    -d '{
-                        "Messages":[
-                                {
-                                        "From": {
-                                                "Email": "${env.MAIL_JET_EMAIL_ADDRESS}",
-                                                "Name": "Jenkins Notification"
-                                        },
-                                        "To": [
-                                                {
-                                                        "Email": "${env.MY_EMAIL_ADDRESS}",
-                                                        "Name": "Developer Team"
-                                                }
-                                        ],
-                                    "Subject": "Jenkins Build Pipeline your project ${currentBuild.fullDisplayName} Failed",
-                                    "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} deployment failed",
-                                    "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} is not deployed, Build Failed </h3> <br> <p> Build Url: ${env.BUILD_URL}  </p>"
-                                }
-                        ]
-                    }' || true"""
-                }
+                sh """curl -s \
+                -X POST \
+                --user ${env.MAIL_JET_API_KEY}:${env.MAIL_JET_API_SECRET} \
+                https://api.mailjet.com/v3.1/send \
+                -H "Content-Type:application/json" \
+                -d '{
+                    "Messages":[
+                            {
+                                    "From": {
+                                            "Email": "${env.MAIL_JET_EMAIL_ADDRESS}",
+                                            "Name": "ArpanSahuOne Jenkins Notification"
+                                    },
+                                    "To": [
+                                            {
+                                                    "Email": "${env.MY_EMAIL_ADDRESS}",
+                                                    "Name": "Developer Team"
+                                            }
+                                    ],
+                                "Subject": "Jenkins Build Pipeline your project ${currentBuild.fullDisplayName} Failed",
+                                "TextPart": "Hola Development Team, your project ${currentBuild.fullDisplayName} deployment failed",
+                                "HTMLPart": "<h3>Hola Development Team, your project ${currentBuild.fullDisplayName} is not deployed, Build Failed </h3> <br> <p> Build Url: ${env.BUILD_URL}  </p>"
+                            }
+                    ]
+                }' || true"""
             }
         }
         always {
