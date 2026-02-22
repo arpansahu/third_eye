@@ -182,7 +182,7 @@ pipeline {
                 }'"""
 
                 // Trigger deployment job dynamically
-                build job: "${env.ENV_PROJECT_NAME}", parameters: [booleanParam(name: 'DEPLOY', value: true)], wait: false
+                build job: "${env.ENV_PROJECT_NAME}_deploy", parameters: [booleanParam(name: 'DEPLOY', value: true)], wait: false
             }
         }
         failure {

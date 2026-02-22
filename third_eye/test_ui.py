@@ -10,7 +10,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def base_url(server_url):
     """Return base URL for tests"""
     return server_url if server_url else "http://127.0.0.1:8000"
