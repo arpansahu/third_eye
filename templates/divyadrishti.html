@@ -5,74 +5,250 @@
 {% block head %}
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+<!-- Select2 CSS for searchable dropdowns -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-theme@0.1.0-beta.10/dist/select2-bootstrap.min.css" rel="stylesheet" />
+
+<style>
+    .diagnosis-container {
+        position: relative;
+        margin-top: 40px;
+        margin-bottom: 40px;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .diagnosis-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .form-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1B1B1B;
+        margin-bottom: 0.5rem;
+        text-align: center;
+    }
+    
+    .form-subtitle {
+        font-size: 1rem;
+        color: #666;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        border: 2px solid #e0e0e0;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .submit-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        width: 100%;
+        margin-top: 1rem;
+    }
+    
+    .submit-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+    }
+    
+    .submit-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        margin-right: 0.5rem;
+    }
+    
+    /* Select2 custom styling */
+    .select2-container--bootstrap .select2-selection {
+        border-radius: 10px;
+        border: 2px solid #e0e0e0;
+        padding: 0.5rem;
+        min-height: 48px;
+    }
+    
+    .select2-container--bootstrap .select2-selection--single .select2-selection__rendered {
+        padding-top: 0.25rem;
+    }
+    
+    .symptom-number {
+        display: inline-block;
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 28px;
+        margin-right: 8px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+    
+    .patient-info-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+    
+    .symptoms-section {
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .diagnosis-card {
+            padding: 1.5rem;
+        }
+        .form-title {
+            font-size: 1.5rem;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="container" style="position: relative; margin-top: 50px; max-width: 600px;">
+<div class="diagnosis-container">
+    <div class="diagnosis-card">
+        <h1 class="form-title">Disease Diagnosis</h1>
+        <p class="form-subtitle">Enter patient information and select up to 5 symptoms for AI-powered diagnosis</p>
 
-    <form method="post" enctype="multipart/form-data" class="bg-dark p-4 rounded shadow">
-        {% csrf_token %}
+        <form method="post" enctype="multipart/form-data" id="diagnosisForm">
+            {% csrf_token %}
 
-        <div class="form-group">
-            <label for="pname" class="text-white"><strong>Enter Patient Name :</strong></label>
-            <input type="text" class="form-control" id="pname" name="pname" value="arpansahu">
-        </div>
+            <div class="patient-info-section">
+                <div class="form-group mb-0">
+                    <label for="pname">
+                        <i class="fa fa-user"></i> Patient Name
+                    </label>
+                    <input type="text" class="form-control" id="pname" name="pname" 
+                           placeholder="Enter patient name" required>
+                </div>
+            </div>
 
-        <div class="form-group">
-            <label for="Symptom1" class="text-white"><strong>Select Symptom 1 :</strong></label>
-            <select name="Symptom1" id="Symptom1" class="form-control">
-                {% for i in Symptoms %}
-                    <option value="{{ i.id }}">{{ i.symptom_name }}</option>
+            <div class="symptoms-section">
+                <h5 style="color: #333; margin-bottom: 1.5rem; font-weight: 600;">
+                    <i class="fa fa-stethoscope"></i> Select Symptoms
+                </h5>
+                
+                {% for i in "12345" %}
+                <div class="form-group">
+                    <label for="Symptom{{ i }}">
+                        <span class="symptom-number">{{ i }}</span>
+                        Symptom {{ i }}
+                    </label>
+                    <select name="Symptom{{ i }}" id="Symptom{{ i }}" class="form-control symptom-select" required>
+                        <option value="">-- Select Symptom {{ i }} --</option>
+                        {% for symptom in Symptoms %}
+                            <option value="{{ symptom.id }}">{{ symptom.symptom_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 {% endfor %}
-            </select>
-        </div>
+            </div>
 
-        <div class="form-group">
-            <label for="Symptom2" class="text-white"><strong>Select Symptom 2 :</strong></label>
-            <select name="Symptom2" id="Symptom2" class="form-control">
-                {% for j in Symptoms %}
-                    <option value="{{ j.id }}">{{ j.symptom_name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="Symptom3" class="text-white"><strong>Select Symptom 3 :</strong></label>
-            <select name="Symptom3" id="Symptom3" class="form-control">
-                {% for l in Symptoms %}
-                    <option value="{{ l.id }}">{{ l.symptom_name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="Symptom4" class="text-white"><strong>Select Symptom 4 :</strong></label>
-            <select name="Symptom4" id="Symptom4" class="form-control">
-                {% for m in Symptoms %}
-                    <option value="{{ m.id }}">{{ m.symptom_name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="Symptom5" class="text-white"><strong>Select Symptom 5 :</strong></label>
-            <select name="Symptom5" id="Symptom5" class="form-control">
-                {% for n in Symptoms %}
-                    <option value="{{ n.id }}">{{ n.symptom_name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn-primary btn-block">Submit Symptoms</button>
-    </form>
-
+            <button type="submit" class="btn btn-primary submit-btn" id="submitBtn">
+                <span id="btnText">Analyze Symptoms</span>
+                <span id="btnLoader" style="display: none;">
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    Analyzing...
+                </span>
+            </button>
+        </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script src="{% static 'particles.js' %}"></script>
 <script src="{% static 'app.js' %}"></script>
+
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 on all symptom dropdowns
+        $('.symptom-select').select2({
+            theme: 'bootstrap',
+            placeholder: 'Search for a symptom...',
+            allowClear: true,
+            width: '100%'
+        });
+        
+        // Form submission with loading state
+        $('#diagnosisForm').on('submit', function() {
+            var submitBtn = $('#submitBtn');
+            submitBtn.prop('disabled', true);
+            $('#btnText').hide();
+            $('#btnLoader').show();
+        });
+        
+        // Prevent selecting the same symptom twice
+        $('.symptom-select').on('change', function() {
+            var selectedValues = [];
+            $('.symptom-select').each(function() {
+                if ($(this).val()) {
+                    selectedValues.push($(this).val());
+                }
+            });
+            
+            // Disable already selected options in other dropdowns
+            $('.symptom-select').each(function() {
+                var currentSelect = $(this);
+                var currentValue = currentSelect.val();
+                
+                currentSelect.find('option').each(function() {
+                    var option = $(this);
+                    if (option.val() && selectedValues.includes(option.val()) && option.val() !== currentValue) {
+                        option.prop('disabled', true);
+                    } else {
+                        option.prop('disabled', false);
+                    }
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}

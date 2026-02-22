@@ -1,24 +1,142 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block title %}Medical Facilities{% endblock %}
+
+{% block title %}Third Eye | Disease Detection System{% endblock %}
+
+{% block head %}
+<style>
+    .hero-section {
+        min-height: 82vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+    
+    .hero-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 3rem 2rem;
+        max-width: 700px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: #1B1B1B;
+        margin-bottom: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.5rem;
+        color: #555;
+        margin-bottom: 1rem;
+        font-weight: 300;
+    }
+    
+    .hero-description {
+        font-size: 1.1rem;
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+    
+    .cta-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        padding: 1rem 3rem;
+        font-size: 1.2rem;
+        font-weight: 600;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
+    }
+    
+    .features {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .feature-item {
+        text-align: center;
+        padding: 1rem;
+        flex: 1;
+        min-width: 150px;
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .feature-text {
+        font-size: 0.9rem;
+        color: #666;
+        font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        .hero-subtitle {
+            font-size: 1.2rem;
+        }
+        .hero-card {
+            padding: 2rem 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid" style="padding-top: 30px;">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="card-title" style="font-size: 24px; font-weight: bold;">Check for Disease</h5>
-                    <h6 class="card-text" style="font-size: 16px;">Our system helps you identify potential diseases based on your symptoms. Click the button below to start the process.</p>
-                    <div class="d-flex justify-content-center">
-                        <a href="{% url 'divyadrishti' %}" class="btn btn-primary">Click Here</a>
-                    </div>
-                </div>
+<div class="hero-section">
+    <div class="hero-card text-center">
+        <h1 class="hero-title">Third Eye</h1>
+        <h2 class="hero-subtitle">AI-Powered Disease Detection</h2>
+        <p class="hero-description">
+            Enter your symptoms and let our advanced machine learning system predict potential diseases. 
+            Get instant results and find nearby medical facilities.
+        </p>
+        <a href="{% url 'divyadrishti' %}" class="btn btn-primary cta-button">
+            Start Diagnosis
+        </a>
+        
+        <div class="features">
+            <div class="feature-item">
+                <div class="feature-icon">🤖</div>
+                <div class="feature-text">AI Powered</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-text">Instant Results</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🏥</div>
+                <div class="feature-text">Find Hospitals</div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-text">Secure & Private</div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block scripts %}
 {% endblock %}

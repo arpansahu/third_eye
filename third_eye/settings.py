@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import subprocess
 from decouple import config
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -28,16 +29,28 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', cast=bool, default=False)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(' ')
 
+# Email Configuration
+MAIL_JET_API_KEY = config('MAIL_JET_API_KEY', default='')
+MAIL_JET_API_SECRET = config('MAIL_JET_API_SECRET', default='')
+MAIL_JET_EMAIL_ADDRESS = config('MAIL_JET_EMAIL_ADDRESS', default='')
+MY_EMAIL_ADDRESS = config('MY_EMAIL_ADDRESS', default='')
+
+# Cloud Storage Configuration
+USE_S3 = config('USE_S3', cast=bool, default=True)
 AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
 BUCKET_TYPE = config('BUCKET_TYPE')
 
+# Database
 DATABASE_URL = config('DATABASE_URL')
 REDIS_CLOUD_URL = config('REDIS_CLOUD_URL')
 
+# Sentry Configuration
 SENTRY_ENVIRONMENT = config('SENTRY_ENVIRONMENT')  # production Or "staging", "development", etc.
 SENTRY_DSH_URL = config('SENTRY_DSH_URL')
+SENTRY_ORG = config('SENTRY_ORG', default='arpansahu')
+SENTRY_PROJECT = config('SENTRY_PROJECT', default='third_eye')
 
 PROJECT_NAME = 'third_eye'
 # ===============================================================================
@@ -52,6 +65,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'divyadrishti',
+    'check_service_health',
+    'django_test_enforcer',
 ]
 
 MIDDLEWARE = [
@@ -148,7 +163,10 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-if not DEBUG:
+# CRITICAL: STATIC_ROOT must be defined regardless of USE_S3
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+if USE_S3 and not DEBUG:
     if BUCKET_TYPE == 'AWS':
         AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
         AWS_DEFAULT_ACL = 'public-read'
@@ -231,8 +249,6 @@ else:
     # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
     STATIC_URL = '/static/'
-
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -254,9 +270,15 @@ CACHES = {
 # Get the current git commit hash
 def get_git_commit_hash():
     try:
-        return subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('utf-8').strip()
+        return subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], 
+            stderr=subprocess.DEVNULL  # Suppress errors in Docker
+        ).decode('utf-8').strip()
     except Exception:
         return None
+
+# Adjust sampling based on environment
+traces_sample_rate = 0.1 if SENTRY_ENVIRONMENT == 'production' else 1.0
 
 sentry_sdk.init(
     dsn=SENTRY_DSH_URL,
@@ -264,19 +286,12 @@ sentry_sdk.init(
             DjangoIntegration(
                 transaction_style='url',
                 middleware_spans=True,
-                # signals_spans=True,
-                # signals_denylist=[
-                #     django.db.models.signals.pre_init,
-                #     django.db.models.signals.post_init,
-                # ],
-                # cache_spans=False,
             ),
         ],
-    traces_sample_rate=1.0,  # Adjust this according to your needs
+    traces_sample_rate=traces_sample_rate,
     send_default_pii=True,  # To capture personal identifiable information (optional)
     release=get_git_commit_hash(),  # Set the release to the current git commit hash
     environment=SENTRY_ENVIRONMENT,  # Or "staging", "development", etc.
-    # profiles_sample_rate=1.0,
 )
 
 LOGGING = {

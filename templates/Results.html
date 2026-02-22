@@ -1,35 +1,250 @@
 {% extends 'base.html' %}
 
-{% block title %}Divya Drishti Results{% endblock %}
+{% block title %}Diagnosis Results | Third Eye{% endblock %}
+
+{% block head %}
+<style>
+    .results-container {
+        min-height: 80vh;
+        padding: 2rem 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+    
+    .results-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        padding: 2.5rem;
+        max-width: 900px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        margin-top: 2rem;
+    }
+    
+    .patient-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .patient-name {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1B1B1B;
+        margin-bottom: 0.5rem;
+    }
+    
+    .patient-subtitle {
+        font-size: 1rem;
+        color: #666;
+    }
+    
+    .symptoms-section {
+        margin-bottom: 2rem;
+    }
+    
+    .symptoms-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .symptoms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .symptom-card {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+    
+    .symptom-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+    }
+    
+    .symptom-number {
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 24px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        margin-right: 0.5rem;
+    }
+    
+    .symptom-name {
+        font-size: 0.95rem;
+        color: #333;
+        font-weight: 500;
+        display: inline;
+    }
+    
+    .diagnosis-result {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        text-align: center;
+        margin: 2rem 0;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+    
+    .diagnosis-label {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.9);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .diagnosis-disease {
+        font-size: 2.5rem;
+        color: white;
+        font-weight: 700;
+        margin: 0;
+        text-transform: capitalize;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+    
+    .action-btn {
+        padding: 0.9rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        border: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-primary-custom {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        color: white;
+    }
+    
+    .btn-secondary-custom {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+    }
+    
+    .btn-secondary-custom:hover {
+        background: #667eea;
+        color: white;
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .results-card {
+            padding: 1.5rem;
+        }
+        .patient-name {
+            font-size: 1.5rem;
+        }
+        .diagnosis-disease {
+            font-size: 1.8rem;
+        }
+        .action-buttons {
+            flex-direction: column;
+        }
+        .action-btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container d-flex justify-content-center align-items-start" style="min-height: 80vh; padding-top: 30px;">
-    <div class="card text-center p-4" style="max-width: 800px; background-color: white; border-radius: 15px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);">
-        <h2 class="mb-4" style="color: #1B1B1B;">Patient Name: {{ name }}</h2>
-
-        <div class="row">
-            <div class="col-md-6">
-                <h4 style="color: #333;">Selected Symptom 1: {{ symptom1 }}</h4>
+<div class="results-container">
+    <div class="results-card">
+        <div class="patient-header">
+            <div class="patient-name">{{ name }}</div>
+            <div class="patient-subtitle">Diagnosis Report</div>
+        </div>
+        
+        <div class="symptoms-section">
+            <div class="symptoms-title">
+                <i class="fa fa-stethoscope" style="margin-right: 0.5rem; color: #667eea;"></i>
+                Reported Symptoms
             </div>
-            <div class="col-md-6">
-                <h4 style="color: #333;">Selected Symptom 2: {{ symptom2 }}</h4>
-            </div>
-            <div class="col-md-6">
-                <h4 style="color: #333;">Selected Symptom 3: {{ symptom3 }}</h4>
-            </div>
-            <div class="col-md-6">
-                <h4 style="color: #333;">Selected Symptom 4: {{ symptom4 }}</h4>
-            </div>
-            <div class="col-md-6 offset-md-3">
-                <h4 style="color: #333;">Selected Symptom 5: {{ symptom5 }}</h4>
+            <div class="symptoms-grid">
+                {% if symptom1 %}
+                <div class="symptom-card">
+                    <span class="symptom-number">1</span>
+                    <span class="symptom-name">{{ symptom1 }}</span>
+                </div>
+                {% endif %}
+                {% if symptom2 %}
+                <div class="symptom-card">
+                    <span class="symptom-number">2</span>
+                    <span class="symptom-name">{{ symptom2 }}</span>
+                </div>
+                {% endif %}
+                {% if symptom3 %}
+                <div class="symptom-card">
+                    <span class="symptom-number">3</span>
+                    <span class="symptom-name">{{ symptom3 }}</span>
+                </div>
+                {% endif %}
+                {% if symptom4 %}
+                <div class="symptom-card">
+                    <span class="symptom-number">4</span>
+                    <span class="symptom-name">{{ symptom4 }}</span>
+                </div>
+                {% endif %}
+                {% if symptom5 %}
+                <div class="symptom-card">
+                    <span class="symptom-number">5</span>
+                    <span class="symptom-name">{{ symptom5 }}</span>
+                </div>
+                {% endif %}
             </div>
         </div>
-
-        <h3 class="font-weight-bold mt-4" style="color: #1B1B1B;">Your Probable Disease Is: {{ disease }}</h3>
-
-        <div class="mt-5 d-flex justify-content-center">
-            <a href="" class="btn btn-primary btn-lg me-2">Identify Another Disease</a>
-            <a id="medical-facilities-link" href="{% url 'table' %}" class="btn btn-secondary btn-lg" style="margin-left: 5px;">Check out Nearby Medical Facilities</a>
+        
+        <div class="diagnosis-result">
+            <div class="diagnosis-label">Probable Diagnosis</div>
+            <h1 class="diagnosis-disease">{{ disease }}</h1>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="{% url 'divyadrishti' %}" class="action-btn btn-primary-custom">
+                <i class="fa fa-refresh"></i> New Diagnosis
+            </a>
+            <a id="medical-facilities-link" href="{% url 'table' %}" class="action-btn btn-secondary-custom">
+                <i class="fa fa-hospital-o"></i> Find Hospitals
+            </a>
         </div>
     </div>
 </div>
